@@ -49,11 +49,15 @@ struct EmergencyContactsView: View {
     
     // thank you https://www.hackingwithswift.com/books/ios-swiftui/writing-data-to-the-documents-directory
     func getDocumentsDirectory() -> URL {
-        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        return paths[0]
+        do {
+            return try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        } catch {
+            print(error.localizedDescription)
+        }
+        return URL.init(string: "")!
     }
     
-    func getContacts() -> [CNContact]{
+    func getContacts() -> [CNContact] {
         let contacts = CNContactStore()
         var allContacts: [CNContact] = []
         let keysToFetch = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey] as! [any CNKeyDescriptor]
@@ -74,14 +78,15 @@ struct EmergencyContactsView: View {
     @State var saveContactToWrite:String = ""
     
     var path : URL {
-        if !FileManager.default.fileExists(atPath: getDocumentsDirectory().appendingPathComponent("contacts.txt").absoluteString) {
+        if !FileManager.default.fileExists(atPath: getDocumentsDirectory().appendingPathComponent("contacts").appendingPathExtension("txt").path) {
+            print("doesn't exist")
             do {
-                try "empty".write(to: getDocumentsDirectory().appendingPathComponent("contacts.txt"), atomically: true, encoding: .utf8)
+                try "empty".write(to: getDocumentsDirectory().appendingPathComponent("contacts").appendingPathExtension("txt"), atomically: true, encoding: .utf8)
             } catch {
                 print(error.localizedDescription)
             }
         }
-        return getDocumentsDirectory().appendingPathComponent("contacts.txt")
+        return getDocumentsDirectory().appendingPathComponent("contacts").appendingPathExtension("txt")
     }
     
     var savedContacts : [String] {
@@ -89,6 +94,7 @@ struct EmergencyContactsView: View {
         do {
             try array = String(contentsOf: path).components(separatedBy: .newlines)
             print("the array \(array)")
+            print("the path \(path)")
             if array.count == 1 && array[0] == "empty" {
                 array = []
             }
@@ -115,20 +121,27 @@ struct EmergencyContactsView: View {
                         print(saveContactToWrite)
                     }
                 }
-            }
-        }.alert("Add \(saveContactLabel) to Saved Contacts?", isPresented: $showsAlert) {
-            //TODO: actually add these to a SavedContacts file
-            Button("OK", role: .cancel) {
-                do {
-                    try saveContactToWrite.write(to: path, atomically: true, encoding: .utf8)
-                    try print(String(contentsOf: path))
-                } catch {
-                    print(error.localizedDescription)
+            }.alert("Add \(saveContactLabel) to Saved Contacts?", isPresented: $showsAlert) {
+                //TODO: actually add these to a SavedContacts file
+                Button("Save", role: .none) {
+                    do {
+                        print(path)
+                        print("the saved contact to write: \(saveContactToWrite)")
+                        let writeDataContact = Data(saveContactToWrite.utf8)
+                        try writeDataContact.write(to: path)
+                        try print(String(contentsOf: path))
+                    } catch {
+                        print(error.localizedDescription)
+                    }
                 }
+                
             }
         }
+        
     }
 }
+    
+
 
 struct NearestHospitalView: View {
     // originates to GVSU's Allendale Campus
