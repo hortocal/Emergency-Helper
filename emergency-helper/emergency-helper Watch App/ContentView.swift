@@ -79,7 +79,6 @@ struct EmergencyContactsView: View {
     
     var path : URL {
         if !FileManager.default.fileExists(atPath: getDocumentsDirectory().appendingPathComponent("contacts").appendingPathExtension("txt").path) {
-            print("doesn't exist")
             do {
                 try "empty".write(to: getDocumentsDirectory().appendingPathComponent("contacts").appendingPathExtension("txt"), atomically: true, encoding: .utf8)
             } catch {
@@ -93,8 +92,6 @@ struct EmergencyContactsView: View {
         var array : [String] = []
         do {
             try array = String(contentsOf: path).components(separatedBy: .newlines)
-            print("the array \(array)")
-            print("the path \(path)")
             if array.count == 1 && array[0] == "empty" {
                 array = []
             }
@@ -108,7 +105,9 @@ struct EmergencyContactsView: View {
         List {
             Section("Saved Contacts") {
                 ForEach(savedContacts.indices, id: \.self) {
-                    Text(savedContacts[$0])
+                    if !(savedContacts[$0] == "empty" || savedContacts[$0] == ""){
+                        Text(savedContacts[$0])
+                    }
                 }
             }
             Section("Other Contacts") {
@@ -118,18 +117,16 @@ struct EmergencyContactsView: View {
                         self.showsAlert = true
                         self.saveContactLabel = "\(allContacts[int].givenName) \(allContacts[int].familyName)"
                         self.saveContactToWrite = "\(allContacts[int].givenName) \(allContacts[int].familyName) \(allContacts[int].phoneNumbers[0].value.stringValue)\n"
-                        print(saveContactToWrite)
                     }
                 }
             }.alert("Add \(saveContactLabel) to Saved Contacts?", isPresented: $showsAlert) {
                 //TODO: actually add these to a SavedContacts file
                 Button("Save", role: .none) {
                     do {
-                        print(path)
-                        print("the saved contact to write: \(saveContactToWrite)")
-                        let writeDataContact = Data(saveContactToWrite.utf8)
-                        try writeDataContact.write(to: path)
-                        try print(String(contentsOf: path))
+                        var writeArray = savedContacts
+                        writeArray.append(saveContactToWrite)
+                        let writeData = writeArray.joined(separator: "\n")
+                        try writeData.write(toFile: path.path, atomically: true, encoding: .utf8)
                     } catch {
                         print(error.localizedDescription)
                     }
