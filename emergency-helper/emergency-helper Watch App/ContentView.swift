@@ -10,7 +10,6 @@ import MapKit
 import CoreLocation
 import Contacts
 
-
 struct ContentView: View {
     var body: some View {
         NavigationView {
@@ -47,6 +46,13 @@ struct BookView: View {
 }
 
 struct EmergencyContactsView: View {
+    
+    // thank you https://www.hackingwithswift.com/books/ios-swiftui/writing-data-to-the-documents-directory
+    func getDocumentsDirectory() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0]
+    }
+    
     func getContacts() -> [CNContact]{
         let contacts = CNContactStore()
         var allContacts: [CNContact] = []
@@ -58,6 +64,7 @@ struct EmergencyContactsView: View {
         }
         return allContacts
     }
+    
     var allContacts : [CNContact] {
         return getContacts()
     }
@@ -66,19 +73,45 @@ struct EmergencyContactsView: View {
     @State var saveContactLabel:String = ""
     @State var saveContactToWrite:String = ""
     
+    var path : URL {
+        if !FileManager.default.fileExists(atPath: getDocumentsDirectory().appendingPathComponent("contacts.txt").absoluteString) {
+            do {
+                try "empty".write(to: getDocumentsDirectory().appendingPathComponent("contacts.txt"), atomically: true, encoding: .utf8)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        return getDocumentsDirectory().appendingPathComponent("contacts.txt")
+    }
+    
+    var savedContacts : [String] {
+        var array : [String] = []
+        do {
+            try array = String(contentsOf: path).components(separatedBy: .newlines)
+            print("the array \(array)")
+            if array.count == 1 && array[0] == "empty" {
+                array = []
+            }
+        } catch {
+            print(error.localizedDescription)
+        }
+        return array
+    }
+    
     var body: some View {
         List {
             Section("Saved Contacts") {
-                
+                ForEach(savedContacts.indices, id: \.self) {
+                    Text(savedContacts[$0])
+                }
             }
             Section("Other Contacts") {
                 ForEach(allContacts.indices, id: \.self) {
                     let int = $0
                     Text("\(allContacts[$0].givenName) \(allContacts[$0].familyName)").onTapGesture {
-                        print("\(allContacts[int].givenName)")
                         self.showsAlert = true
                         self.saveContactLabel = "\(allContacts[int].givenName) \(allContacts[int].familyName)"
-                        self.saveContactToWrite = "\(allContacts[int].givenName) \(allContacts[int].familyName) \(allContacts[int].phoneNumbers[0])"
+                        self.saveContactToWrite = "\(allContacts[int].givenName) \(allContacts[int].familyName) \(allContacts[int].phoneNumbers[0].value.stringValue)\n"
                         print(saveContactToWrite)
                     }
                 }
@@ -86,7 +119,12 @@ struct EmergencyContactsView: View {
         }.alert("Add \(saveContactLabel) to Saved Contacts?", isPresented: $showsAlert) {
             //TODO: actually add these to a SavedContacts file
             Button("OK", role: .cancel) {
-                print("great job")
+                do {
+                    try saveContactToWrite.write(to: path, atomically: true, encoding: .utf8)
+                    try print(String(contentsOf: path))
+                } catch {
+                    print(error.localizedDescription)
+                }
             }
         }
     }
@@ -106,7 +144,7 @@ struct FirstAidCellView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             HStack(alignment: .center) {
-                Image(systemName: "text.book.closed.fill").resizable().aspectRatio(contentMode: .fit).foregroundColor(.red)
+                Image(systemName: "text.book.closed").resizable().aspectRatio(contentMode: .fit).foregroundColor(.red)
                 Spacer()
                 Text("Open First Aid Booklet")
                 Spacer()
