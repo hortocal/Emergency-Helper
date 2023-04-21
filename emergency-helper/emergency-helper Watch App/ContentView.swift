@@ -73,9 +73,12 @@ struct EmergencyContactsView: View {
         return getContacts()
     }
     
-    @State var showsAlert = false
+    @State var showsSaveAlert = false
+    @State var showsCallAlert = false
     @State var saveContactLabel:String = ""
     @State var saveContactToWrite:String = ""
+    @State var callContactLabel:String = ""
+    @State var callContactNumber:String = ""
     
     var path : URL {
         if !FileManager.default.fileExists(atPath: getDocumentsDirectory().appendingPathComponent("contacts").appendingPathExtension("txt").path) {
@@ -106,20 +109,30 @@ struct EmergencyContactsView: View {
             Section("Saved Contacts") {
                 ForEach(savedContacts.indices, id: \.self) {
                     if !(savedContacts[$0] == "empty" || savedContacts[$0] == ""){
-                        Text(savedContacts[$0])
+                        let callContactArray = savedContacts[$0].components(separatedBy: " ")
+                        Text(savedContacts[$0]).onTapGesture {
+                            self.showsCallAlert = true
+                            self.callContactLabel = callContactArray[0] + " " + callContactArray[1]
+                            self.callContactNumber = callContactArray[2]
+                        }
                     }
                 }
+            }.alert("Call \(callContactLabel) at \(callContactNumber)? [Not production ready for purposes of demonstration.]", isPresented: $showsCallAlert) {
+                Button("Call!", role: .none) {
+                    print("Calling...")
+                }
             }
+            
             Section("Other Contacts") {
                 ForEach(allContacts.indices, id: \.self) {
                     let int = $0
                     Text("\(allContacts[$0].givenName) \(allContacts[$0].familyName)").onTapGesture {
-                        self.showsAlert = true
+                        self.showsSaveAlert = true
                         self.saveContactLabel = "\(allContacts[int].givenName) \(allContacts[int].familyName)"
                         self.saveContactToWrite = "\(allContacts[int].givenName) \(allContacts[int].familyName) \(allContacts[int].phoneNumbers[0].value.stringValue)\n"
                     }
                 }
-            }.alert("Add \(saveContactLabel) to Saved Contacts?", isPresented: $showsAlert) {
+            }.alert("Add \(saveContactLabel) to Saved Contacts?", isPresented: $showsSaveAlert) {
                 Button("Save", role: .none) {
                     do {
                         var writeArray = savedContacts
