@@ -120,7 +120,6 @@ struct EmergencyContactsView: View {
                     }
                 }
             }.alert("Add \(saveContactLabel) to Saved Contacts?", isPresented: $showsAlert) {
-                //TODO: actually add these to a SavedContacts file
                 Button("Save", role: .none) {
                     do {
                         var writeArray = savedContacts
@@ -143,6 +142,7 @@ struct EmergencyContactsView: View {
 struct NearestHospitalView: View {
     // originates to GVSU's Allendale Campus
     @State private var region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 42.96467, longitude: -85.88889), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+
     
     var body: some View {
         Map(coordinateRegion: $region, showsUserLocation: true, userTrackingMode: .constant(.follow))
@@ -170,7 +170,7 @@ struct EmergencyContactsCellView: View {
             HStack(alignment: .center) {
                 Image(systemName: "person.crop.circle.badge.exclamationmark").resizable().aspectRatio(contentMode: .fit).foregroundColor(.red)
                 Spacer()
-                Text("Emergency Contacts")
+                Text("Contacts")
                 Spacer()
                 Image(systemName: "arrow.right")
             }
@@ -184,7 +184,7 @@ struct NearestHospitalCellView: View {
             HStack(alignment: .center) {
                 Image(systemName: "building.2").resizable().aspectRatio(contentMode: .fit).foregroundColor(.red)
                 Spacer()
-                Text("Find Hospital")
+                Text("Find Things Nearby")
                 Spacer()
                 Image(systemName: "arrow.right")
             }
@@ -264,12 +264,5 @@ struct BrokenBonesView: View {
                 Text("This information was provided by Outdoor Geek. Thank you!")
             }.tabViewStyle(PageTabViewStyle())
         }
-    }
-}
-
-struct MapView: View {
-    var body: some View {
-        Map(coordinateRegion: .constant(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 51.507222, longitude: -0.1275), span: MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5))), interactionModes: [])
-            .frame(width: 400, height: 300)
     }
 }
